@@ -49,7 +49,7 @@ contract ERC721A is IERC721A {
 
     // The bit mask of the `burned` bit in packed ownership.
     uint256 private constant BITMASK_BURNED = 1 << 224;
-    
+
     // The bit position of the `nextInitialized` bit in packed ownership.
     uint256 private constant BITPOS_NEXT_INITIALIZED = 225;
 
@@ -101,7 +101,7 @@ contract ERC721A is IERC721A {
     }
 
     /**
-     * @dev Returns the starting token ID. 
+     * @dev Returns the starting token ID.
      * To change the starting token ID, please override this function.
      */
     function _startTokenId() internal view virtual returns (uint256) {
@@ -117,7 +117,7 @@ contract ERC721A is IERC721A {
 
     /**
      * @dev Returns the total number of tokens in existence.
-     * Burned tokens will reduce the count. 
+     * Burned tokens will reduce the count.
      * To get the total number of tokens minted, please see `_totalMinted`.
      */
     function totalSupply() public view override returns (uint256) {
@@ -195,7 +195,8 @@ contract ERC721A is IERC721A {
     function _setAux(address owner, uint64 aux) internal {
         uint256 packed = _packedAddressData[owner];
         uint256 auxCasted;
-        assembly { // Cast aux without masking.
+        assembly {
+            // Cast aux without masking.
             auxCasted := aux
         }
         packed = (packed & BITMASK_AUX_COMPLEMENT) | (auxCasted << BITPOS_AUX);
@@ -537,37 +538,34 @@ contract ERC721A is IERC721A {
         }
         _afterTokenTransfers(address(0), to, startTokenId, quantity);
     }
-    
+
     function _mint2(address to, uint256 quantity) internal {
-    uint256 startTokenId = _currentIndex;
-    require(to != address(0), "MintToZeroAddress");
-    require(quantity > 0, "MintZeroQuantity");
+        uint256 startTokenId = _currentIndex;
+        require(to != address(0), 'MintToZeroAddress');
+        require(quantity > 0, 'MintZeroQuantity');
 
-    _beforeTokenTransfers(address(0), to, startTokenId, quantity);
+        _beforeTokenTransfers(address(0), to, startTokenId, quantity);
 
-    unchecked {
-        _packedAddressData[to] += quantity * ((1 << BITPOS_NUMBER_MINTED) | 1);
+        unchecked {
+            _packedAddressData[to] += quantity * ((1 << BITPOS_NUMBER_MINTED) | 1);
 
-        _packedOwnerships[startTokenId] =
-            _addressToUint256(to) |
-            (block.timestamp << BITPOS_START_TIMESTAMP) |
-            (_boolToUint256(quantity == 1) << BITPOS_NEXT_INITIALIZED);
+            _packedOwnerships[startTokenId] =
+                _addressToUint256(to) |
+                (block.timestamp << BITPOS_START_TIMESTAMP) |
+                (_boolToUint256(quantity == 1) << BITPOS_NEXT_INITIALIZED);
 
-        uint256 updatedIndex = startTokenId;
-        uint256 end = updatedIndex + quantity;
+            uint256 updatedIndex = startTokenId;
+            uint256 end = updatedIndex + quantity;
 
-        for (uint256 i = updatedIndex; i < end; i++) {
-            emit Transfer(address(0), to, i);
+            for (uint256 i = updatedIndex; i < end; i++) {
+                emit Transfer(address(0), to, i);
+            }
+
+            _currentIndex = end;
         }
 
-        _currentIndex = end;
+        _afterTokenTransfers(address(0), to, startTokenId, quantity);
     }
-
-    _afterTokenTransfers(address(0), to, startTokenId, quantity);
-}
-
-    
-
 
     /**
      * @dev Transfers `tokenId` from `from` to `to`.
@@ -691,7 +689,7 @@ contract ERC721A is IERC721A {
             _packedOwnerships[tokenId] =
                 _addressToUint256(from) |
                 (block.timestamp << BITPOS_START_TIMESTAMP) |
-                BITMASK_BURNED | 
+                BITMASK_BURNED |
                 BITMASK_NEXT_INITIALIZED;
 
             // If the next slot may not have been initialized (i.e. `nextInitialized == false`) .
@@ -806,9 +804,9 @@ contract ERC721A is IERC721A {
      */
     function _toString(uint256 value) internal pure returns (string memory ptr) {
         assembly {
-            // The maximum value of a uint256 contains 78 digits (1 byte per digit), 
+            // The maximum value of a uint256 contains 78 digits (1 byte per digit),
             // but we allocate 128 bytes to keep the free memory pointer 32-byte word aliged.
-            // We will need 1 32-byte word to store the length, 
+            // We will need 1 32-byte word to store the length,
             // and 3 32-byte words to store a maximum of 78 digits. Total: 32 + 3 * 32 = 128.
             ptr := add(mload(0x40), 128)
             // Update the free memory pointer to allocate.
@@ -821,7 +819,7 @@ contract ERC721A is IERC721A {
             // The following is essentially a do-while loop that also handles the zero case.
             // Costs a bit more than early returning for the zero case,
             // but cheaper in terms of deployment and overall runtime costs.
-            for { 
+            for {
                 // Initialize and perform the first pass without check.
                 let temp := value
                 // Move the pointer 1 byte leftwards to point to an empty character slot.
@@ -829,14 +827,15 @@ contract ERC721A is IERC721A {
                 // Write the character to the pointer. 48 is the ASCII index of '0'.
                 mstore8(ptr, add(48, mod(temp, 10)))
                 temp := div(temp, 10)
-            } temp { 
+            } temp {
                 // Keep dividing `temp` until zero.
                 temp := div(temp, 10)
-            } { // Body of the for loop.
+            } {
+                // Body of the for loop.
                 ptr := sub(ptr, 1)
                 mstore8(ptr, add(48, mod(temp, 10)))
             }
-            
+
             let length := sub(end, ptr)
             // Move the pointer 32 bytes leftwards to make room for the length.
             ptr := sub(ptr, 32)

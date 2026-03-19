@@ -1,10 +1,6 @@
 require('@nomiclabs/hardhat-waffle');
 require('@nomiclabs/hardhat-ethers');
 
-if (process.env.REPORT_GAS) {
-  require('hardhat-gas-reporter');
-}
-
 if (process.env.REPORT_COVERAGE) {
   require('solidity-coverage');
 }
@@ -22,10 +18,7 @@ module.exports = {
       },
     },
   },
-  gasReporter: {
-    currency: 'USD',
-    gasPrice: 100,
-    showTimeSpent: true,
+  networks: {
+    hardhat: {},
   },
-  plugins: ['solidity-coverage'],
 };
